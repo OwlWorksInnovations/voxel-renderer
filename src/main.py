@@ -53,38 +53,39 @@ def main():
         7, 5, 4,
     ], dtype="i4")
 
+    cube_offsets = np.array([
+        [x, y, z] 
+        for x in range(32) 
+        for y in range(32) 
+        for z in range(32)
+    ], dtype='f4')
+
     # Sends the vertices to the buffer (gpu)
     vbo = ctx.buffer(vertices)
     ibo = ctx.buffer(indices)
-    vao = ctx.vertex_array(prog, [(vbo, '3f', 'in_vert')], index_buffer=ibo)
+    instance_vbo = ctx.buffer(cube_offsets)
+    vao = ctx.vertex_array(prog, [(vbo, '3f', 'in_vert'), (instance_vbo, '3f /i', 'in_pos')], index_buffer=ibo)
 
     # Set up the camera
-    projection = glm.perspective(glm.radians(45.0), 800 / 600, 0.1, 100.0)
-    view = glm.lookAt(glm.vec3(2, 2, 3), glm.vec3(0, 0, 0), glm.vec3(0, 1, 0))
+    projection = glm.perspective(glm.radians(45.0), 800 / 600, 0.1, 2000.0)
+    view = glm.lookAt(glm.vec3(60, 60, 50), glm.vec3(16, 16, 16), glm.vec3(0, 1, 0))
     
     # Main loop
     clock = pygame.time.Clock()
     running = True
     
+    pv = projection * view
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
 
-        t = pygame.time.get_ticks() * 0.001
-        
-        # Create a model matrix (position, scale, rotation)
-        model = glm.mat4(1.0)
-        
-        # Make cube rotate
-        # model = glm.rotate(model, t, glm.vec3(1, 1, 0))
-        
-        mvp = projection * view * model
-        prog['mvp'].write(mvp)
-        
         ctx.clear(0.1, 0.1, 0.1, depth=1.0)
-        vao.render(moderngl.TRIANGLES)
-
+        
+        prog['mvp'].write(pv)
+            
+        vao.render(moderngl.TRIANGLES, instances=32768)
+        
         pygame.display.flip()
         clock.tick(60)
 

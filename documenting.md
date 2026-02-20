@@ -8,9 +8,7 @@ I learned that opengl just uses shaders which is the gpu programming language (I
 
 ModernGL has this workflow (after creating context): Write shader code > send to buffer > send to pygame window. I highly recommend using a dedicated shaders folder then installing glsl lint and writing a shader loader (just open the file and return the read).
 
-## 3D Graphics
-
-### Square (2D)
+## Square (2D)
 
 Essentially how every thing in graphics is rendered by using triangles which are constructed of vertices (think of a outline of points) and told where to be drawn using indices (think of how you would fit the triangle).
 
@@ -41,7 +39,7 @@ And a visual representation:
 0 ------- 1
 ```
 
-### Cube (3D)
+## Cube (3D)
 
 3D graphics maintains the same concept but you can think of a square being a face because you would need 6 faces to form a cube.
 
@@ -96,3 +94,7 @@ And here is a visual representation
 Now that we have the cube mapped out we can start to draw it onto the screen. To do this we must first set up a camera with a perspective (think of it being fov settings). After doing that we can then use PyGLM to create a model matrix (Position, scale, rotation) to set the position of the cube in our 3d space. To find out where to put it we use this `mvp = projection * view * model` which reads right to left. The view then shifts the cube relative to the camera (view), and then finally squashed into a 2D perspective.
 
 Resulting in a 3d cube being rendered! If we want to move the cube we simply do the following `model = glm.rotate(model, t, glm.vec3(1, 1, 0))`
+
+## Drawing many cubes
+
+A voxel game is made up of millions of voxels so that probably means we should be able to draw many of them. To do this we simply wrap the drawing into a loop, ohh but wait now our gpu is sitting idle and our cpu is screaming for help. But there must be a better way right? Yes there is indeed, instead of asking the gpu each time we need to draw a cube we just say "Hey I need you to draw X amount of cubes for me" this way the cpu does not need to play a game of catch up the whole time. Now to do this is quite easy. First you calculate the offsets for each cube, I just made a loop in range of 32 for each coordinate (x, y, z), then you can update your vertex shader to have a list of all the positions where the cube should be (which was calculated using the for loop). Next is to move the mvp calculation logic directly into the shader. Finally you can set up a instance_vbo that fills the buffer with the cube_offsets and update your ``vertex_array` to include this.
